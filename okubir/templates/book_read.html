@@ -1,0 +1,124 @@
+{% extends "layout.html" %}
+
+{% block title %} Kitap Okuma {% endblock %}
+
+{% block style %}
+    .pdfobject-container { 
+        height: 85vh;
+        width: 70vw;
+        float: left;
+    }
+        
+    .pdfobject { border: 1px solid #666; }
+
+    #note_form {
+        margin-left: 75vw;
+    }
+    #comments {
+        clear: left;
+        float: left;
+        width: 50%;
+    }
+    #notes {
+        float: right;
+        width: 50%;
+    }
+{% endblock %}
+
+{%- block body %}
+{%- from "_comment_helper.html" import add_comments with context %}
+{%- from "_formhelpers.html" import render_field %}
+<div id="ebook" class="well"></div>
+<div id="note_form" class="well">
+    <button id="note_show" onclick="showNote()" class="btn btn-md btn-primary">Not al</button>
+    <div id="note" {% if hide %} hidden {% endif %}>
+        <h3>Kitaba not al</h3>
+        <form method=post action='{{ url_for("writeNote", assoc_id=assoc.id) }}'>
+            {{ note_form.csrf_token }}
+            {{ render_field(note_form.page, size=4) }}
+            {{ render_field(note_form.note, rows="10", cols="25") }}
+            {{ render_field(note_form.is_public) }}
+            <input type=submit value='Tamam'>
+        </form>
+    </div>
+    <div>
+        <h3>Okunan sayfa sayısını güncelle</h3>
+        <input type="text" id="pages_read" name="pages_read" value={{ assoc.pages_read }} maxlength="4" size="4">/{{ assoc.book.page_amount }}
+        <button onclick="updatePages()" class="btn btn-sm btn-primary">Güncelle</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        {{ add_comments(assoc.book, assoc) }}
+    </div>
+    <div class="col-md-6">
+        <div class="well">
+        <h3>Herkese Açık Notlar</h3>
+        {%- for as in assoc.book.user_assocs %}
+            {%- for note in as.notes if note.is_public %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{{ note.userbook.user.get_name() }} <em>(Sayfa {{ note.page }})</em> -
+                     <em>{{ format_time(note.time_created) }} {% if note.time_last_modified %}(* {{format_time(note.time_last_modified)}}){% endif %}</em></h3>
+                     {%- if note.user.id == current_user.id %}
+                     <a href="{{ url_for('removeNote', note_id=note.id) }}"><button class="btn btn-sm btn-default btn-pantitle">Sil</button></a>
+                     {%- endif %}
+                </div>
+                <div class="panel-body">
+                    {{ note.text }}
+                </div>
+            </div>
+            {%- endfor %}
+        {%- endfor %}
+        </div>
+        <div class="well">
+        <h3>Özel Notlarım</h3>
+        {%- for note in assoc.notes if not note.is_public %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{{ note.userbook.user.get_name() }} <em>(Sayfa {{ note.page }})</em> -
+                     <em>{{ format_time(note.time_created) }} {% if note.time_last_modified %}(* {{format_time(note.time_last_modified)}}){% endif %}</em></h3>
+                     {%- if note.user.id == current_user.id %}
+                     <a href="{{ url_for('removeNote', note_id=note.id) }}"><button class="btn btn-sm btn-default btn-pantitle">Sil</button></a>
+                     {%- endif %}
+                </div>
+                <div class="panel-body">
+                    {{ note.text }}
+                </div>
+            </div>
+        {%- endfor %}
+        </div>
+    </div>
+</div>
+{%- endblock %}
+{%- block script %}
+<script src="/static/js/edit_comment.js"></script>
+<script>
+    function showNote() {
+        var d = document.getElementById("note");
+        d.hidden=!d.hidden;
+    }
+    function updatePages() {
+        var p = document.getElementById("pages_read").value;
+        document.location.href = '/update_book_list?book_id='+{{assoc.book.id}}+'&pages_read='+p;
+    }
+</script>
+{%- if assoc.book.ebook_fname %}
+    <script src="/static/ebook_stuff/pdf_object/pdfobject.js"></script>
+    <script>
+        var options = {
+           page: "{{ start_page }}",
+           PDFJS_URL: "/static/ebook_stuff/web/viewer.html",
+           forcePDFJS: true
+        };
+        
+        PDFObject.embed("{{ ebook_path(assoc.book.ebook_fname) }}", "#ebook", options);
+    </script>
+{%- else %}
+    <script>
+        var div = document.getElementById("ebook");
+        div.innerHTML = '<div class="alert alert-warning" role="alert">Bu kitabın e-kitap dosyası bulunmuyor.</div>'
+    </script>
+{%- endif %}
+{%- endblock %}

@@ -1,0 +1,233 @@
+{% extends "layout.html" %}
+
+{% block title %} Kullanıcı Sayfası {% endblock %}
+
+{% block style %}
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    table, th, td {
+        border: 1px solid #ccc;
+    }
+    td {
+        padding: 10px;
+        text-align: left;
+    }
+    th {
+        padding: 15px;
+        text-align: center;
+    }
+    tr:hover {
+        background-color: #f9f9f9
+    }
+    tr {
+        background-color: #f2f2f2
+    }
+    h2, h3, h4 {
+        text-align: center;
+    }
+    td a {
+        color: black
+    }
+    td a:hover {
+        background-color: #333;
+        color: #ddd;
+    }
+    td#operations hr {
+        padding: 0;
+        margin: 0;
+    }
+    td#extra hr {
+        padding: 0;
+        margin: 0;
+    }
+{% endblock %}
+
+{% block body %}
+{% from "_book_add_helper.html" import add_book_select %}
+{% from "_glyphicon_macro.html" import glyph %}
+
+<div class="row">
+	<div class="col-sm-6 col-md-5 col-lg-4">
+        <div class="well">
+		{% if current_user.reading_goal %}
+            <p>{{ goal_message }}</p>
+            <button class="btn btn-primary" type="button" id="update-goal-btn" onclick="updateGoal()">Hedefi güncelle</button>
+            <a href="/remove_goal"><button class="btn btn-primary pull-right" type="button">Hedefi kaldır</button></a>
+		{% else %}
+			Günlük okuma hedefi koy:
+			<form method=post action={{ url_for('setGoal') }}>
+				<input type=text name='goal' id='goal' maxlength="3" size="3">
+				<button class="btn btn-primary" type="submit">Tamam</button>
+			</form>
+		{% endif %}
+        </div>
+	</div>
+</div>
+
+
+<div class="row">
+    <div id=book_list class="column col-md-8">
+        <div class="well">
+        <h3> {{ glyph("book") }} Listemdeki Kitaplar </h3> 
+        <hr>
+        {% for i, st in status_list if i in [status.will_read, status.reading, status.have_read] %}
+            <h4> {{ st }} </h4>
+            <table>
+                <thead>
+                    <th>Kitap ismi</th>
+                    <th>Yazar</th>
+                    {% if i == status.will_read or i == status.recommended %}
+                    <th>Okuma Durumu</th>
+                    {% endif %}
+                    {% if i == status.reading %}
+                    <th>Okunan Sayfa Sayısı</th>
+                    {% endif %}
+                    <th>İşlemler</th>
+                </thead>
+                <tbody>
+                {% for assoc in current_user.book_assocs if assoc.status == i %}
+                    <tr>
+                        <td><a href="{{ url_for('bookPage', book_id=assoc.book.id) }}">{{ assoc.book.name }}</a></td>
+                        <td>{{ assoc.book.author.get_name() }}</td>
+                        {% if i == status.will_read %}
+                        <td>
+                            <select name="status" id="status{{assoc.book.id}}" onchange="updateStatus({{assoc.book.id}})">
+                            {% for i, st in status_list %}
+                                {% if assoc.status == status.recommended or i in [status.will_read, status.reading, status.have_read] %}
+                                <option value="{{ i }}" {% if assoc.status == i %}selected="selected"{% endif %}>{{ st }}</option>
+                                {% endif %}
+                            {% endfor %}
+                            </select>
+                        </td>
+                        {% endif %}
+                        {% if i == status.reading %}
+                        <td>
+                            <input type="text" id="pages_read_{{assoc.book.id}}" name="pages_read" value={{ assoc.pages_read }} onchange="updatePagesRead({{assoc.book.id}})" maxlength="4" size="4">/{{ assoc.book.page_amount }}
+                        </td>
+                        {% endif %}
+                        <td id="operations">
+                        {% if i == status.have_read %}
+                            <button class="btn btn-xs btn-default" onclick="rateBook({{assoc.id}}, 1)" {% if assoc.rating == 1 %} style="color:blue;font-weight: bold;" {% endif %}>{{ glyph("thumbs-up") }} Beğen</button>
+                            <button class="btn btn-xs btn-default" onclick="rateBook({{assoc.id}}, -1)" {% if assoc.rating == -1 %} style="color:red;font-weight: bold;" {% endif %}>{{ glyph("thums-down") }}  Beğenme</button>
+                            <hr>
+                            {% if not assoc.summary %}
+                                <a href="{{ url_for('writeSummary', assoc_id=assoc.id) }}"><button class="btn btn-xs btn-primary">Özet Yaz</button></a>
+                                <hr>
+                            {% else %}
+                                <a href="{{ url_for('summaryPage', sum_id=assoc.summary.id) }}"><button class="btn btn-xs btn-primary">Özeti Görüntüle</button></a>
+                                <hr>
+                            {% endif %}
+                        {% elif i == status.reading %}
+                            <a href="{{ url_for('bookRead', book_id=assoc.book.id) }}"><button class="btn btn-xs btn-primary">Kitabı Oku</button></a>
+                            <hr>
+                        {% endif %}
+                            <a href="{{ url_for('removeBookFromList', book_id=assoc.book.id) }}"><button class="btn btn-xs btn-danger">Listeden Kaldır</button></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endfor %}
+    </div>
+    </div>
+    <div id=note_list class="col-md-4">
+        <div class="well">
+        <h3>{{ glyph("pencil") }}  Notlarım</h3>
+        <hr>
+        {% for assoc in current_user.book_assocs if assoc.status >= status.reading and assoc.notes %}
+            {%- if loop.index > 3 %}{% break %}{% endif %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">{{ assoc.book }}</h4>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-group">
+                    {% for note in assoc.notes %}
+                    {%- if loop.index > 3 %}
+                        <li class="list-group-item"><a href="{{url_for('bookRead', book_id=assoc.book.id)}}">Bütün notları görmek için kitap okuma sayfasına gidin.</a></li>
+                    {% break -%}
+                    {% endif -%}
+                        <li class="list-group-item">{{ note.text[:150] }}... <a href="{{ url_for('bookRead', book_id=assoc.book.id, start_page=note.page) }}">(Sayfa {{ note.page }})</a> - <em>{{ format_time(note.time_created) }}</em></li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+        <div class="well">
+        <h3>Özetlerim</h3>
+        <hr>
+        {% for assoc in current_user.book_assocs if assoc.status == status.have_read and assoc.summary %}
+            {%- if loop.index > 3 %}{% break %}{% endif %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">{{ assoc.book }} - <em>{{ format_time(assoc.summary.time_created) }}</em></h4>
+                </div>
+                <div class="panel-body">
+                    <p>{{ assoc.summary.text[:150] }}... <a href="{{ url_for('summaryPage', sum_id=assoc.summary.id) }}">(devam)</a></p>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+	<div class="col-md-12">
+        <div class="well">
+		<h3>Tavsiye Edilen Kitaplar</h3>
+		<hr>
+		<ul class="list-inline" style="text-align: center;">
+		{% for assoc in current_user.book_assocs if assoc.status == status.recommended %}
+			<li>
+				<ul class="list-group">
+					<li class="list-group-item">
+						<a href="{{ url_for('bookPage', book_id=assoc.book.id) }}">{{ assoc.book }}</a>
+					</li>
+					<li class="list-group-item">
+                        <select name="status" id="status{{assoc.book.id}}" onchange="updateStatus({{assoc.book.id}})">
+							<option value="-1">Listeye ekle</option>
+						{% for i, st in status_list if i in [status.will_read, status.reading, status.have_read] %}
+							<option value="{{ i }}">{{ st }}</option>
+						{% endfor %}
+						</select>
+
+					</li>
+					<li class="list-group-item">
+						{% if assoc.book.score_amount != 0 %}Değerlendiren {{ assoc.book.score_amount }} kişinin %{{ 100*(assoc.book.like_amount//assoc.book.score_amount) }}'ü tarafından beğenilmiş{% else %}Bu kitaba değerlendirme yapılmamış{% endif %}
+					</li>
+					<li class="list-group-item">
+						<a href="{{ url_for('bookPage', book_id=assoc.book.id) }}"> Yorumları okumak için kitap sayfasına git</a>
+					</li>
+				</ul>
+			</li>
+		{% endfor %}
+		</ul>
+        </div>
+	</div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="static/js/add_to_list.js"></script>
+<script>
+    function updateStatus(book_id) {
+        var x = document.getElementById("status"+book_id).value;
+        document.location.href = '/update_book_list?book_id='+book_id+'&status='+x;
+    }
+    function updatePagesRead(book_id) {
+        var x = document.getElementById("pages_read_"+book_id).value;
+        document.location.href = '/update_book_list?book_id='+book_id+'&pages_read='+x;
+    }
+    function rateBook(assoc_id, rate) {
+        document.location.href = '/ratebook/'+assoc_id+'?rate='+rate;
+    }
+    function updateGoal() {
+        modal_div = document.getElementById("modal-d");
+        modal_div.innerHTML = "<p>Yeni günlük okuma hedefini giriniz:</p><form method=post action={{ url_for('setGoal') }}><input type=text name='goal' id='goal' maxlength='3' size='3'><input type=submit value='Güncelle'></form>";
+        show_modal();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %} Özet Yaz {% endblock %}
+
+{% block body %}
+{% from "_formhelpers.html" import render_field %}
+
+<div class="row">
+    <div class="col-md-8">
+        <form method=post>
+            <h3>Özet Yaz</h3>
+            {{ form.csrf_token }}
+            {{ form.summary(rows='18', cols='100') }}
+            {% if form.summary.errors %}
+                <ul class=errors>
+                {% for error in form.summary.errors %}
+                  <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            <!--<p><input type=submit value=Gönder></p>-->
+            <p><input type=submit value=Gönder type="button" class="btn btn-lg btn-primary"></p>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,31 @@
+{% from "_formhelpers.html" import render_field %}
+
+{% macro add_comments(book, assoc) %}
+<div class="well">
+    <h3><span class="glyphicon glyphicon-comment"></span> Yorumlar</h3>
+    {% for comment in book.comments %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ comment.user.get_name() }} - 
+                <em>{{ format_time(comment.time_created) }} {% if comment.time_last_modified %}(* {{format_time(comment.time_last_modified)}}){% endif %}</em></h3>
+                {%- if comment.user.id == current_user.id %}
+                    <a href="{{ url_for('removeComment', comment_id=comment.id) }}"><button class="btn btn-sm btn-default btn-pantitle">Sil</button></a>
+                    <button class="btn btn-sm btn-default btn-pantitle" onclick="editComment({{comment.id}})">Düzenle</button>
+                {% endif -%}
+            </div>
+            <div class="panel-body">
+                {{ comment.text }}
+                <form id="edit-comment-form{{comment.id}}" method='POST' action="{{ url_for('editComment', comment_id=comment.id) }}" hidden>
+                    <textarea id="comment" name="comment">{{ comment.text }}</textarea>
+                    <input type=submit value='Düzenle'>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+    <form method=POST action="{{ url_for('writeComment', book_id=book.id) }}">
+        {{ comment_form.csrf_token }}
+        {{ render_field(comment_form.comment, rows="5", cols="45") }}
+        <button type=submit class="btn btn-primary">Gönder</button>
+    </form>
+</div>
+{% endmacro %}

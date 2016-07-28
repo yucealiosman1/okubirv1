@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %} Kitap Ekle {% endblock %}
+
+{% block body %}
+{% from "_formhelpers.html" import render_field %}
+
+<div class="row">
+    <form method=post enctype=multipart/form-data action={{ url_for('addBook') }}>
+        <ul>
+            {{ form.csrf_token }}
+            {{ render_field(form.name) }}
+            {{ render_field(form.author) }}
+            {{ render_field(form.publication_place) }}
+            {{ render_field(form.publication_year) }}
+            {{ render_field(form.publisher) }}
+            {{ render_field(form.isbn) }}
+            {{ render_field(form.page_amount) }}
+            {{ render_field(form.description) }}
+            {{ render_field(form.ebook) }}
+            {{ render_field(form.image) }}
+        </ul>
+        <p><input type=submit value=Ekle>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [ "$1" = "dev" ]
+then
+    source ./set_env.sh
+    ./manage.py runserver
+elif [ "$1" = "test" ]
+then
+    source ./set_env.sh test
+    ./manage.py test
+elif [ "$1" = "pro" ]
+then
+    source ./set_env.sh pro
+    ./manage.py runserver
+else
+    echo "Wrong parameter"
+fi

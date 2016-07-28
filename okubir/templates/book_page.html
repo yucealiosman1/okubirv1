@@ -1,0 +1,119 @@
+{% extends "layout.html" %}
+
+{% block title %} {{ book.name }} {% endblock %}
+
+{% block style %}
+
+    dt {
+        float: left;
+        text-align: right;
+        font-weight: bold;
+    }
+    dt:after {
+        content: ":";
+    }
+    dd {
+        margin: 0 0 0 110px;
+        padding: 0 0 0.5em 0.5em;
+    }
+    h1, h2 {
+		text-align: center;
+	}
+    img {
+        float: left;
+        margin-right: 2em;
+    }
+{% endblock %}
+
+{% block body %}
+{% from "_book_add_helper.html" import add_book_select %}
+{% from "_comment_helper.html" import add_comments with context %}
+{% from "_formhelpers.html" import render_field %}
+<div class="page-header">
+    <h1>{{ book }}</h1>
+</div>
+{% if book.description %}
+<div class="row">
+    <div class="well">
+        <p>{{ book.description }}</p>
+    </div>
+</div>
+{% endif %}
+<div class="row">
+	{% if book.image_fname %}
+	<div class="col-md-2">
+        <img src="{{ image_path(book.image_fname) }}" width=200>
+	</div>
+	{% endif %}
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ book.name }}</h3>
+            </div>
+            <div class="panel-body">
+                <dl>
+                    <dt>Yazar</dt>
+                    <dd>{{ book.author.get_name() }}</dd>
+                    <dt>Yayım yeri</dt>
+                    <dd>{% if book.publication_place %} {{ book.publication_place }} {% else %} - {% endif %}</dd>
+                    <dt>Yayım yılı</dt>
+                    <dd>{% if book.publication_year %} {{ book.publication_year }} {% else %} - {% endif %}</dd>
+                    <dt>Yayınevi</dt>
+                    <dd>{% if book.publisher %} {{ book.publisher.name }} {% else %} - {% endif %}</dd>
+                    <dt>ISBN</dt>
+                    <dd>{% if book.isbn %} {{ book.isbn }} {% else %} - {% endif %}</dd>
+                    <dt>Sayfa sayısı</dt>
+                    <dd>{% if book.page_amount %} {{ book.page_amount }} {% else %} - {% endif %}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+	<div class="col-md-6">
+	{% if book.score_amount != None %}
+	<ul class="list-group">
+		{% if book.score_amount != 0 %}<li class="list-group-item">Beğenilme yüzdesi: %{{ 100*(book.like_amount//book.score_amount) }}</li>{% endif %}
+		<li class="list-group-item">Toplam değerlendirme: {{ book.score_amount }}</li>
+	</ul>
+	{% endif %}
+
+	{% if assoc %}
+		{% if assoc.status >= 2 %}
+			<a href={{ url_for('bookRead', book_id=book.id) }}><button type="button" class="btn btn-lg btn-primary">Kitabı oku</button></a>
+		{% else %}
+			<a href={{ url_for('updateBookFromList', book_id=book.id, status=2) }}><button type="button" class="btn btn-lg btn-default">Şu anda okuduklarım listesine ekle</button></a>
+		{% endif %}
+	{% else %}
+		{{ add_book_select(book.id) }}
+	{% endif %}
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-6">
+        {{ add_comments(book, assoc) }}
+	</div>
+	<div class="col-md-6">
+        <div class="well">
+		<h3>Özetler</h3>
+		{% for s in book.summaries if s %}
+			<div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">{{ s.user.get_name() }} - 
+                    <em>{{ format_time(s.time_created) }} {% if s.time_last_modified %}(* {{format_time(s.time_last_modified)}}){% endif %}</em></h4>
+                </div>
+                <div class="panel-body">
+                    <p>{{ s.text[:150] }}... <a href="{{ url_for('summaryPage', sum_id=s.id) }}">(devam)</a></p>
+                </div>
+            </div>
+        {% else %}
+            <p>Bu kitaba özet yazılmamış.</p>
+		{% endfor %}
+        </div>
+	</div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="/static/js/add_to_list.js"></script>
+<script src="/static/js/edit_comment.js"></script>
+{% endblock %}

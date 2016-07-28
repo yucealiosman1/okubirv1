@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block title %} Kitap Arama {% endblock %}
+
+{% block style %}
+    img {
+        float: left;
+        margin-right: 2em;
+    }
+{% endblock %}
+
+{% block body %}
+    {% from "_book_add_helper.html" import add_book_select %}
+    <div class="row">
+        <div class="column col-md-8">
+            <h2>Arama Sonuçları</h2>
+            <hr>
+            {% if not books.items %}
+            <p>Kitap bulunamadı.</p>
+            {% endif %}
+            {% for book in books.items %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title"><a href="{{ url_for('bookPage', book_id=book.id) }}">{{ book.name }}</a> - {{ book.author.get_name() }}</h4>
+                </div>
+                <div class="panel-body">
+                    {% if book.image_fname %}
+                        <img src="{{ image_path(book.image_fname) }}" width=100>
+                    {% endif %}
+                    {% if book.description %}
+                        <p>{{ book.description }}</p>
+                    {% endif %}
+                    {{ add_book_select(book.id) }}
+                </div>
+            </div>
+            {% endfor %}
+            {% if books.has_prev %}<a href="{{ url_for('searchBook', page=books.prev_num, words=words) }}"><span class="glyphicon glyphicon-chevron-left"></span> Önceki sayfa</a>{% else %}<span class="glyphicon glyphicon-chevron-left"></span> Önceki sayfa{% endif %} | 
+            {% if books.has_next %}<a href="{{ url_for('searchBook', page=books.next_num, words=words) }}">Sonraki sayfa <span class="glyphicon glyphicon-chevron-right"></span></a>{% else %}Sonraki sayfa <span class="glyphicon glyphicon-chevron-right"></span>{% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+<script src="/static/js/add_to_list.js"></script>
+{% endblock %}

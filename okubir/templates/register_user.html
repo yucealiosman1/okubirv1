@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+
+{% block title %} Kullanici Kaydi {% endblock %}
+
+{% block body %}
+{% from "_formhelpers.html" import render_field %}
+<div class="row">
+	<div class="col-md-3"></div>
+	<div class="col-md-6">
+        <div class="well">
+		<form method=post action={{ url_for('registerUser') }}>
+			<ul>
+				{{ form.csrf_token }}
+				{{ render_field(form.name) }}
+				{{ render_field(form.surname) }}
+				{{ render_field(form.email) }}
+				{{ render_field(form.password) }}
+				{{ render_field(form.confirm) }}
+				{{ render_field(form.birth_date) }} (örnek: 20/01/1980)
+				{{ render_field(form.interests) }}
+				{{ render_field(form.il) }}
+				{{ render_field(form.ilce) }}
+				{{ render_field(form.semt) }}
+			</ul>
+			<p><button type=submit class="btn btn-primary">Kayıt ol</button></p>
+		</form>
+		<p>Kayıtlı mısınız? <a href="/login"><button class="btn btn-xs btn-primary">Giriş yap</button></a>.</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+$("#il").change(function() {
+    $("#semt").empty();
+    var il_id = $(this).find(":selected").val();
+    if(il_id < 1 || il_id > 81){
+        return;
+    }
+    var request = $.ajax({
+        type: 'GET',
+        url: '/ilceler/' + il_id,
+    });
+    request.done(function(data){
+        $("#ilce").empty();
+        $("#ilce").append(
+                $("<option></option>").attr(
+                    "value", 0).text("-- İlçe seçebilirsiniz --")
+            );
+        for (var i = data.start; i <= data.end; i++) {
+            $("#ilce").append(
+                $("<option></option>").attr(
+                    "value", i).text(data[i])
+            );
+        }
+    });
+});
+
+$("#ilce").change(function() {
+    var ilce_id = $(this).find(":selected").val();
+    if(ilce_id < 1){
+        return;
+    }
+    var request = $.ajax({
+        type: 'GET',
+        url: '/semtler/' + ilce_id,
+    });
+    request.done(function(data){
+        $("#semt").empty();
+        $("#semt").append(
+                $("<option></option>").attr(
+                    "value", 0).text("-- Semt seçebilirsiniz --")
+            );
+        for (var i = data.start; i <= data.end; i++) {
+            $("#semt").append(
+                $("<option></option>").attr(
+                    "value", i).text(data[i])
+            );
+        }
+    });
+});
+</script>
+{% endblock %}

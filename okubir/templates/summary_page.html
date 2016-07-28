@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %} Kitap Özeti {% endblock %}
+
+{% block body %}
+{% from "_formhelpers.html" import render_field %}
+
+<div class="row">
+    <div class="col-md-2"></div>
+    <div class="col-md-8">
+        <h2>Özet - {{ summary.book }}</h2>
+        <div class="panel panel-default">
+            {% if summary.user == current_user %}
+            <div class="panel-heading">
+                <a href="{{ url_for('editSummary', assoc_id=summary.userbook.id) }}"><button class="btn btn-info">Düzenle</button></a>
+                <a href="{{ url_for('deleteSummary', assoc_id=summary.userbook.id) }}"><button class="btn btn-danger">Sil</button></a>
+            </div>
+            {% endif %}
+            <div class="panel-body">
+                <p>{{ summary.text }}</p>
+                <strong><p>Özetleyen - {{ summary.user.get_name() }} <em>{{ format_time(summary.time_created) }}</em></p></strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

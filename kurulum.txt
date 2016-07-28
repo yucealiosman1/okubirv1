@@ -1,0 +1,27 @@
+source Uygulamanın kurulumu:
+---------------------
+-pip, git, virtualenv ve tercihe göre virtualenvwrapper yükle
+-okubir için bir virtual environment yarat
+-git'ten repository'i clone et (repo url'i bitbucket'ta yazıyor)
+-gereklilikleri yükle: >pip install -r requirements.txt(bu basamaktan önce veritabanı kurulumunu yapınız.)
+-set_env.sh dosyasını editle
+-çalıştırmak için virtual enve gir ve run scriptini çalıştır: >source run dev
+
+Veritabanının kurulumu:
+-----------------------
+-mysql, libmysqlclient-dev, python-dev ve mysql-python u yükle 
+	>sudo apt-get install mysql-server
+	>sudo apt-get install libmysqlclient-dev
+	>sudo apt-get install python-dev
+	>pip install mysql-python
+-mysql'e gir: >mysql -u root -p [parola]
+-database yarat: >create database okubir_python;
+-tabloların oluşması için okubiri çalıştırıp bir sayfaya gir: >source run dev
+-charsetleri düzeltmek için script çalıştır: >python db_utf8.py
+-yer verilerini insert etmek için veritabanına yine girip sql dosyasını çalıştır:
+    >use okubir_python;
+    >source /[dosyanın olduğu yer]/il_ilce_semt.sql;
+-örnek kitap, vs oluşturmak için bir kez browser'dan localhost:5000/initdb adresine git
+
+
+eksik adımlar varsa yazabilirsiniz

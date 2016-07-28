@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% block title %} Anasayfa {% endblock %}
+
+{% block style %}
+    h1, h2, h3, h4 {
+        text-align: center;
+    }
+{% endblock %}
+
+{% block body %}
+
+<div class="row">
+    <div class="jumbotron">
+        <h1>Okubir</h1>
+    </div>
+    
+    <div class="col-md-2"></div>
+    <div class="col-md-8">
+        <div class="well">
+        {%- for n in news %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">{{ format_time(n[0]) }}</h4>
+                </div>
+                <div class="panel-body">
+                    {{ n[1] | safe }}
+                </div>
+            </div>
+        {% endfor -%}
+    </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %} Kitap Öner {% endblock %}
+
+{% block body %}
+{% from "_formhelpers.html" import render_field %}
+
+<form method=post>
+    <ul>
+        {{ form.csrf_token }}
+        {{ render_field(form.book) }}
+    </ul>
+    <p><input type=submit value='Oner'></p>
+</form>
+
+{% endblock %}

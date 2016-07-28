@@ -1,0 +1,9 @@
+
+{% macro add_book_select(book_id) %}
+<select name="status" id="status{{book_id}}" onchange="addToList({{book_id}})">
+    <option value="-1">Kitabı listeye ekle</option>
+    <option value="1">Okunacaklar</option>
+    <option value="2">Şu anda okuduklarım</option>
+    <option value="3">Okunmuşlar</option>
+</select>
+{% endmacro %}
